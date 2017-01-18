@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:mulexml="http://www.mulesoft.org/schema/mule/xml" xmlns:metadata="http://www.mulesoft.org/schema/mule/metadata"
+	xmlns:json="http://www.mulesoft.org/schema/mule/json" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:data-mapper="http://www.mulesoft.org/schema/mule/ee/data-mapper"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:spring="http://www.springframework.org/schema/beans" xmlns:core="http://www.mulesoft.org/schema/mule/core"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/data-mapper http://www.mulesoft.org/schema/mule/ee/data-mapper/current/mule-data-mapper.xsd
+http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-current.xsd
+http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd
+http://www.mulesoft.org/schema/mule/xml http://www.mulesoft.org/schema/mule/xml/current/mule-xml.xsd"
+	version="EE-3.6.0">
+	<context:property-placeholder location="${mule.env}.properties" />
+
+	<!-- 数据源 oracle <db:generic-config name="DB_ORACLE" doc:name="Generic Database 
+		Configuration DB_ORACLE" dataSource-ref="ORACLE_DataSource"> </db:generic-config> -->
+
+	<!-- 数据源 sql server <db:generic-config name="DB_MSSQL" doc:name="Generic 
+		Database Configuration DB_MSSQL" dataSource-ref="MSSQL_DataSource"> </db:generic-config> -->
+
+	<!-- 数据源 mysql -->
+	<db:generic-config name="DB_MYSQL"
+		doc:name="Generic Database Configuration DB_MYSQL" dataSource-ref="MYSQL_DataSource">
+	</db:generic-config>
+
+	<spring:beans>
+		<!-- 数据源 ORACLE <spring:bean id="ORACLE_DataSource" name="ORACLE_DataSource" 
+			class="com.mchange.v2.c3p0.ComboPooledDataSource"> <spring:property name="driverClass" 
+			value="${oracle_driver}" /> <spring:property name="jdbcUrl" value="jdbc:oracle:thin:${oracle_user}/${oracle_password}@${oracle_db}" 
+			/> <spring:property name="initialPoolSize" value="${oracle_initialPoolSize}" 
+			/> <spring:property name="idleConnectionTestPeriod" value="${oracle_idleConnectionTestPeriod}" 
+			/> <spring:property name="maxIdleTime" value="${oracle_maxIdleTime}" /> <spring:property 
+			name="maxPoolSize" value="${oracle_maxPoolSize}" /> <spring:property name="minPoolSize" 
+			value="${oracle_minPoolSize}" /> <spring:property name="testConnectionOnCheckin" 
+			value="${oracle_checkin}" /> <spring:property name="preferredTestQuery" value="${oracle_testQuery}" 
+			/> </spring:bean> -->
+		<!-- 数据源 MSSQL <spring:bean id="MSSQL_DataSource" name="MSSQL_DataSource" 
+			class="com.mchange.v2.c3p0.ComboPooledDataSource"> <spring:property name="driverClass" 
+			value="${sqlserver_driver}" /> <spring:property name="jdbcUrl" value="jdbc:sqlserver://${sqlserver_db}" 
+			/> <spring:property name="initialPoolSize" value="${sqlserver_initialPoolSize}" 
+			/> <spring:property name="idleConnectionTestPeriod" value="${sqlserver_idleConnectionTestPeriod}" 
+			/> <spring:property name="maxIdleTime" value="${sqlserver_maxIdleTime}" /> 
+			<spring:property name="maxPoolSize" value="${sqlserver_maxPoolSize}" /> <spring:property 
+			name="minPoolSize" value="${sqlserver_minPoolSize}" /> <spring:property name="testConnectionOnCheckin" 
+			value="${sqlserver_checkin}" /> <spring:property name="preferredTestQuery" 
+			value="${sqlserver_testQuery}" /> </spring:bean> -->
+		<!-- 数据源 MYSQL -->
+		<spring:bean id="MYSQL_DataSource" name="MYSQL_DataSource"
+			class="com.mchange.v2.c3p0.ComboPooledDataSource">
+			<spring:property name="driverClass" value="${mysql_driver}" />
+			<spring:property name="jdbcUrl" value="jdbc:mysql://${mysql_db}" />
+			<spring:property name="initialPoolSize" value="${mysql_initialPoolSize}" />
+			<spring:property name="idleConnectionTestPeriod"
+				value="${mysql_idleConnectionTestPeriod}" />
+			<spring:property name="maxIdleTime" value="${mysql_maxIdleTime}" />
+			<spring:property name="maxPoolSize" value="${mysql_maxPoolSize}" />
+			<spring:property name="minPoolSize" value="${mysql_minPoolSize}" />
+			<spring:property name="testConnectionOnCheckin"
+				value="${mysql_checkin}" />
+			<spring:property name="preferredTestQuery" value="${mysql_testQuery}" />
+		</spring:bean>
+
+		<!-- 自定义json转换器 -->
+		<spring:bean id="customObjectMapper"
+			class="cn.com.zhoujiandong.esb.common.CustomObjectMapper" />
+
+	</spring:beans>
+
+
+	<flow name="flow-main">
+		<http:inbound-endpoint exchange-pattern="request-response"
+			host="0.0.0.0" port="9999" path="mule" doc:name="in-HTTP" />
+        <component class="cn.com.zhoujiandong.esb.common.ParameterHandle" doc:name="&#26657;&#39564;&#36755;&#20837;-&#36171;&#21021;&#22987;&#20540;"/>
+		<flow-ref name="query_db" doc:name="&#33719;&#21462;&#25968;&#25454;" />
+        <flow-ref name="&#36755;&#20986;" doc:name="&#36755;&#20986;"/>
+        <logger message="===payload=#[payload]===" level="DEBUG" doc:name="Logger"/>
+		<choice-exception-strategy doc:name="Choice Exception Strategy">
+			<catch-exception-strategy
+				doc:name="catch error during PreProcessor:#[exception.causedBy(cn.com.zhoujiandong.esb.common.EsbException)]"
+				when="#[exception.causedBy(cn.com.zhoujiandong.esb.common.EsbException)]">
+				<logger level="WARN" doc:name="Logger"
+					message="caught EsbException===#[payload]" />
+				<expression-component doc:name="ESB异常"><![CDATA[flowVars.error=(cn.com.zhoujiandong.esb.common.EsbException)exception.getCauseException();
+flowVars.errcode=flowVars.error.getCode();
+flowVars.errmsg=flowVars.error.getMessage();]]></expression-component>
+                <flow-ref name="&#36755;&#20986;" doc:name="&#36755;&#20986;"/>
+			</catch-exception-strategy>
+			<catch-exception-strategy doc:name="catch error during adapter processing">
+				<logger level="WARN" doc:name="Logger"
+					message="caught unkonwn exception===#[exception.getSummaryMessage()]" />
+				<expression-component doc:name="&#24322;&#24120;"><![CDATA[flowVars.errcode=500;
+flowVars.errmsg=exception.getCause().getMessage();]]></expression-component>
+                <flow-ref name="&#36755;&#20986;" doc:name="&#36755;&#20986;"/>
+
+			</catch-exception-strategy>
+		</choice-exception-strategy>
+
+	</flow>
+	<sub-flow name="query_db">
+		<db:select config-ref="DB_MYSQL" doc:name="select">
+            <db:dynamic-query><![CDATA[select * from project_type]]></db:dynamic-query>
+		</db:select>
+	</sub-flow>
+	<sub-flow name="&#36755;&#20986;">
+        <choice doc:name="Choice">
+            <when expression="#[flowVars.dataType==&quot;xml&quot;]">
+                <component class="cn.com.zhoujiandong.esb.common.XmlHandle" doc:name="to XML"/>
+            </when>
+            <otherwise>
+                <set-payload value="#[[&quot;code&quot;:flowVars.errcode,&quot;msg&quot;:flowVars.errmsg,&quot;data&quot;:payload]]" doc:name="response"/>
+                <json:object-to-json-transformer mapper-ref="customObjectMapper" doc:name="to JSON"/>
+            </otherwise>
+        </choice>
+	</sub-flow>
+</mule>
